@@ -33,12 +33,12 @@ const toastSucces = document.getElementById('liveToast'); //récuperation de l'i
 const toast = new bootstrap.Toast(toastSucces); //creation du toast (dernière étape)
 
 
-//c
+
 function option(element, message) {
 
     return (new bootstrap.Tooltip(element, { //object avec clefs et valeurs 
         title: message,
-        placement: "bottom",
+        placement: "top", //ou bottom 
         trigger: "focus"
     }));
 }
@@ -47,21 +47,24 @@ function option(element, message) {
 
 
 for (let i = 0; i < inputsForm.length; i++) {
-    const state = inputsForm[i];
-    const helpText = document.getElementById(`${state.id}`);
-    let message = "";
+    const element = inputsForm[i]; //renommer 
+    const helpText = document.getElementById(`${element.id}Help`);
     let tooltip = null;
-    message = tooltipMessage(state)
-    tooltip = option(state, message);
-    const firstInvalidField = form.querySelector('invalid');
 
-    state.addEventListener('invalid', event => {
+
+    element.addEventListener('invalid', event => {
         event.preventDefault();
-        state.classList.add("is-invalid");
-        state.classList.add("text-danger");
+        helpText.classList.add("text-danger");
+        element.classList.add("is-invalid");
 
 
-        if (state === firstInvalidField) {
+        const message = tooltipMessage(element);
+        const tooltip = option(element, message);
+        const firstInvalidField = form.querySelector('invalid');
+
+
+
+        if (element === firstInvalidField) {
             tooltip.show();
             firstInvalidField.focus()
         }
@@ -72,20 +75,25 @@ for (let i = 0; i < inputsForm.length; i++) {
 
     //Evenement change 
 
-    state.addEventListener('change', event => {
-        state.checkValidity();
+    element.addEventListener('change', event => {
+
+        const validity = element.checkValidity();
         event.preventDefault();
-        if (state.validity) {
-            helpText.classList.remove("text-danger");
+
+        if (validity) {
+
+
+            helpText.classList.add("text-danger"); //couleur du helpText
             helpText.classList.add("text-success");
-            state.classList.remove("is-invalid");
-            state.classList.add("is-valid");
+            element.classList.add("is-valid"); //changement couleur des inputs
+            element.classList.remove("is-invalid");
+
+
             if (tooltip != null) {
                 const tooltips = document.querySelectorAll(".tooltip");
                 tooltips.forEach(element => {
-                    element.remove();
+                    element.focus();
                 });
-                tooltip.dispose();
             }
         }
     })
@@ -97,10 +105,13 @@ for (let i = 0; i < inputsForm.length; i++) {
 
 function tooltipMessage(element) {
     if (element.validity.valueMissing) {
+        console.log("champ obligatoire", element.name)
         return "Le champ obligatoire";
     } else if (element.value < element.min && element.validity.rangeUnderflow) {
+        console.log("doit etre positif", element.name)
         return "Doit être positif"; //ne fonctionne pas 
     } else if (element.type === "date") {
+        console.log("Doit être égale ou supérieure à aujourd'hui", element.name)
         return "Doit être égale ou supérieure à aujourd'hui";   //ne fonctionne pas 
     }
 }
@@ -116,15 +127,17 @@ form.addEventListener('submit', event => {
 
     const elements = form.elements;
     const type = elements.type;
-    for (const _element of elements) {
+    for (const element of elements) {
         if (type != 'submit') {
-            helpText.classList.add("text-success");
-            _element.classList.remove("text-danger");
+            // helpText.classList.add("text-success"); //censer etre enlever car reset 
+            // element.classList.remove("text-danger");
 
 
         }
     }
 })
+
+
 
 
 
