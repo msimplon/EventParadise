@@ -22,84 +22,50 @@ date.setAttribute("min", today); // modification de la valeur de l'attribut date
 
 //---------------------------------------------------------------------------------------------------------------//
 
+const form = document.querySelector("form"); //récupèration de l'ensemble par le form
 
+handleValidation(form);
+handleSubmit(form);
 
-const inputsForm = document.querySelectorAll('input, select, textarea');
-const form = document.querySelector('form'); //récupèration de l'ensemble par le form
-
-
-
-const toastSucces = document.getElementById('liveToast'); //récuperation de l'id et initialisation
-const toast = new bootstrap.Toast(toastSucces); //creation du toast (dernière étape)
-
-//voir méthode create tooltip or get 
-//voir le fonctionnement set contente
-
-function createTooltip(element, message) {
-
-    return new bootstrap.Tooltip(element, { //object avec clefs et valeurs 
-        title: message,
-        placement: "top", //ou bottom 
-        trigger: "focus"
-    });
+function handleValidation(form) {
+    for (const element of form.elements) {
+        const elHelpText = document.getElementById(`${element.name}Help`);
+        const type = element.type;
+        if (type != "submit") {
+            invalid(element, elHelpText)
+            onChange(element, elHelpText);
+        }
+    }
 }
 
-
-//
-
-for (let i = 0; i < inputsForm.length; i++) {
-    const element = inputsForm[i]; //renommer 
-    const helpText = document.getElementById(`${element.id}Help`);
-    let tooltip = null;
-    let message = "";
-
-
-    element.addEventListener('invalid', event => {
+function invalid(element, elHelpText) {
+    element.addEventListener("invalid", (event) => {
         event.preventDefault();
-        helpText.classList.add("text-danger");
         element.classList.add("is-invalid");
-        const message = tooltipMessage(element);
-        const tooltip = createTooltip(element, message);
-        const firstInvalidField = form.querySelector('invalid');
-        if (element === firstInvalidField) {
-            element.focus();
-            // tooltip.show();
-            // firstInvalidField.focus()
-        }
-        // onChangeSuccess(state, helpText);
-
+        elHelpText.classList.add("text-danger"); //couleur du helpText
+        const firstInvalidField = form.querySelector('.is-invalid');
+        const tooltip = tooltipInitialize(element);
+        element.setAttribute("data-bs-toggle", "tooltip");
+        firstInvalidField.focus();
+        tooltip.enable();
     });
-
-
-    //Evenement change 
-
-    element.addEventListener('change', event => {
-        const validity = element.checkValidity();
-        if (validity) {
-            helpText.classList.remove("text-danger"); //couleur du helpText
-            helpText.classList.add("text-success");
-            element.classList.add("is-valid"); //changement couleur des inputs
-            element.classList.remove("is-invalid");
-
-            //disable = Supprime la possibilité d’afficher l’info-bulle d’un élément. L’info-bulle ne pourra être affichée que si elle est réactivée.
-
-
-
-        } if (tooltip != null) {
-            tooltip.enable(); //Donne à l’info-bulle d’un élément la possibilité d’être affichée.
-            message = tooltipMessage(element);
-            tooltip.setContent() //Permet de modifier le contenu de l’info-bulle après son initialisation.
-            tooltip.show(); //Affiche l’info-bulle d’un élément. Retourne à l’appelant avant que l’info-bulle ne soit réellement affiché
-        }
-        element.focus();
-    })
 }
 
+function tooltipInitialize(element) {  //object avec clefs et valeurs 
+    const opt = {
 
+        title: "Ce champ est obligatoire.",
+        placement: "top",
+        trigger: "focus hover",
+    };
+    return tooltip = bootstrap.Tooltip.getOrCreateInstance(element, opt);
+}
 
 //personnalisation des messages en cas d'erreur de validation
 
 function tooltipMessage(element) {
+
+    const tooltip = bootstrap.Tooltip.getInstance(element);
     if (element.validity.valueMissing) {
         console.log("champ obligatoire", element.name)
         return "Le champ obligatoire";
@@ -110,43 +76,67 @@ function tooltipMessage(element) {
         console.log("Doit être égale ou supérieure à aujourd'hui", element.name)
         return "Doit être égale ou supérieure à aujourd'hui";   //ne fonctionne pas 
     }
+
+
+    tooltip.setContent({ '.tooltip-inner': message }); //appeler cette mthode avec objet car il attends un object ! :tooltip-inner est une classe css 
 }
 
 
 
-//Réinitialiser complètement le formulaire et afficher le toaster 
-form.addEventListener('submit', event => {
-    event.preventDefault();
-    form.reset();
-    toast.show()
-
-    const elements = form.elements;
-    const type = elements.type;
-
-    for (const element of elements) {
-        if (type != 'submit') {
-            // helpText.classList.add("text-success"); //censer etre enlever car reset 
-            element.classList.remove("text-danger");
-
-
+function onChange(element, elHelpText) {
+    element.addEventListener("change", (event) => {
+        event.preventDefault();
+        const tooltip = bootstrap.Tooltip.getInstance(element);
+        if (element.validity.valid) {
+            if (tooltip) {
+                tooltip.dispose();
+            }
+            element.classList.remove("is-invalid");
+            element.classList.add("is-valid");
+            elHelpText.classList.remove("text-danger");
+            elHelpText.classList.add("text-success");
+        } else {
+            element.classList.add("is-invalid");
+            elHelpText.classList.add("text-danger");
+            const tooltip = tooltipInitialize(element);
+            tooltipMessage(element);
+            tooltip.enable();
         }
-    }
-})
+    });
+
+}
+
+//Réinitialiser complètement le formulaire et afficher le toaster 
+function handleSubmit(form) {
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        toast();
+
+        event.target.reset();
+        for (let element of form.elements) {
+            const type = element.type;
+            if (type != "submit") {
+                element.classList.remove("is-valid");
+                const idHelpText = `${element.name}Help`;
+                const elHelpText = document.getElementById(idHelpText);
+                elHelpText.classList.remove("text-success");
+            }
+        }
+    });
+}
+
+
+function toast() {
+    const toastEl = document.getElementById('toast'); //récuperation de l'id et initialisation
+    const toast = new bootstrap.Toast(toastEl); //creation du toast (dernière étape)
+    toast.show();
+}
 
 
 
-
-
-
+// crtl + F = pour rechercher un mot clé
 //rangeOverflow = valeur inout modififié par l'utilisateur non valid par l'utilisateur définit par la contrainte max
 //rangeUnverflow = valeur inout modififié par l'utilisateur non valid par l'utilisateur définit par la contrainte min
 //Toolong = dépasse la longueur maximale de l’unité de code établie par l’attribut
 // TooShort = inférieure à la longueur minimale
 //TypeMismatch = valeur n’est pas conforme aux contraintes définies par le type,
-
-
-
-
-
-
-
