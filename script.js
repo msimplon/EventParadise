@@ -63,20 +63,18 @@ function tooltipInitialize(element) {  //object avec clefs et valeurs
 
 //personnalisation des messages en cas d'erreur de validation
 
+
+// Ajout du message "error validation"
 function tooltipMessage(element) {
-
+    let message = "Ce champ est obligatoire.";
     const tooltip = bootstrap.Tooltip.getInstance(element);
-    if (element.validity.valueMissing) {
-        console.log("champ obligatoire", element.name)
-        return "Le champ obligatoire";
-    } else if (element.type === "number" && element.validity.rangeUnderflow) { //element.validity.rangeUnderflow 
-        console.log("doit etre positif", element.name)
-        return "Doit être positif"; //ne fonctionne pas 
-    } else if (element.type === "date" && element.validity.rangeUnderflow) {
-        console.log("Doit être égale ou supérieure à aujourd'hui", element.name)
-        return "Doit être égale ou supérieure à aujourd'hui";   //ne fonctionne pas 
+    if (element.name == "rate" && element.validity.rangeUnderflow) {
+        message = 'Doit être positif';
+    } else if (element.name == "date" && element.validity.rangeUnderflow) {
+        message = 'Doit être égale ou supérieure à aujourd’hui';
+    } else {
+        message;
     }
-
 
     tooltip.setContent({ '.tooltip-inner': message }); //appeler cette mthode avec objet car il attends un object ! :tooltip-inner est une classe css 
 }
